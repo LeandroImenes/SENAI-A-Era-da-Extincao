@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SENAI: A Era da Extinção</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Rye&family=Limelight&family=Special+Elite&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #0d0906;
+      color: #f3e9d2;
+      font-family: 'Special Elite', cursive;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    .font-vintage {
+      font-family: 'Rye', cursive;
+    }
+
+    .font-title {
+      font-family: 'Limelight', cursive;
+    }
+
+    /* Efeito de Filme Antigo Otimizado */
+    .film-overlay {
+      pointer-events: none;
+      position: absolute;
+      inset: 0;
+      z-index: 20;
+      background: repeating-linear-gradient(
+        0deg,
+        rgba(0, 0, 0, 0.12),
+        rgba(0, 0, 0, 0.12) 1px,
+        transparent 1px,
+        transparent 2px
+      );
+      opacity: 0.5;
+    }
+
+    /* Estilização Retro para Botões */
+    .btn-vintage {
+      background: linear-gradient(180deg, #e8c382 0%, #a07436 100%);
+      color: #1a1008;
+      border: 3px solid #3d250f;
+      box-shadow: 0 4px 0 #201307, inset 0 2px 0 rgba(255,255,255,0.4);
+      font-family: 'Rye', cursive;
+      text-transform: uppercase;
+      transition: transform 0.1s ease, background 0.1s ease;
+    }
+
+    .btn-vintage:hover {
+      background: linear-gradient(180deg, #f5d79e 0%, #b88842 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 0 #201307, inset 0 2px 0 rgba(255,255,255,0.5);
+    }
+
+    .btn-vintage:active {
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 #201307;
+    }
+
+    /* HUD Bar Style */
+    .ex-card {
+      width: 20px;
+      height: 28px;
+      border: 2px solid #3d250f;
+      background: #2a1e12;
+      border-radius: 3px;
+      transition: background 0.2s;
+    }
+    .ex-card.full {
+      background: linear-gradient(180deg, #fce38a, #f38181);
+      box-shadow: 0 0 6px #fce38a;
+    }
+  </style>
+</head>
+<body class="flex items-center justify-center min-h-screen bg-[#0d0906]">
+
+  <!-- Container Principal do Jogo -->
+  <div class="relative w-full max-w-[960px] aspect-[16/9] bg-[#1a120b] border-4 border-[#4a3520] rounded-xl overflow-hidden shadow-2xl shadow-black">
+    
+    <!-- Camada de Efeito Vintage (Filme/Projetor) -->
+    <div class="film-overlay"></div>
+
+    <!-- Canvas do Jogo -->
+    <canvas id="gameCanvas" width="960" height="540" class="block w-full h-full bg-[#ebd5b3]"></canvas>
+
+    <!-- ========================================== -->
+    <!-- MENU PRINCIPAL                             -->
+    <!-- ========================================== -->
+    <div id="mainMenu" class="absolute inset-0 z-30 flex flex-col items-center justify-center bg-[#18110b]/90 p-6 text-center space-y-6">
+      <div>
+        <h1 class="text-3xl md:text-5xl font-title text-[#f7d070] drop-shadow-[0_4px_0_#4a2c00] tracking-wider uppercase">
+          SENAI: A ERA DA EXTINÇÃO
+        </h1>
+        <p class="text-xs md:text-sm font-vintage text-[#d4a86a] mt-1 tracking-widest">
+          — RUBBERHOSE SHOWDOWN —
+        </p>
+      </div>
+
+      <div class="flex flex-col gap-3 w-64">
+        <button id="startBtn" class="btn-vintage py-3 text-base rounded cursor-pointer">
+          ▶ JOGAR
+        </button>
+        <button id="charSelectBtn" class="btn-vintage py-2.5 text-sm rounded cursor-pointer bg-amber-900/60 hover:bg-amber-800">
+          👤 PERSONAGEM: <span id="selectedCharLabel" class="text-amber-300 font-bold">EDUARDO</span>
+        </button>
+        <!-- Seleção de Dificuldade -->
+        <div class="flex flex-col gap-1 text-left bg-[#2a1d13] p-2 rounded border border-[#8c6d46]">
+          <span class="text-[10px] font-vintage text-amber-300 text-center block">DIFICULDADE / MODO</span>
+          <div class="grid grid-cols-4 gap-1">
+            <button id="diffEasy" class="btn-vintage py-1 text-[9px] rounded cursor-pointer opacity-60">FÁCIL</button>
+            <button id="diffNormal" class="btn-vintage py-1 text-[9px] rounded cursor-pointer ring-2 ring-amber-300">NORMAL</button>
+            <button id="diffHard" class="btn-vintage py-1 text-[9px] rounded cursor-pointer opacity-60">DIFÍCIL</button>
+            <button id="diffTest" class="btn-vintage py-1 text-[9px] rounded cursor-pointer opacity-60 bg-emerald-800">TESTE</button>
+          </div>
+        </div>
+        <button id="controlsBtn" class="btn-vintage py-2.5 text-sm rounded cursor-pointer">
+          🎮 CONTROLES
+        </button>
+        <button id="creditsBtn" class="btn-vintage py-2.5 text-sm rounded cursor-pointer">
+          📜 CRÉDITOS
+        </button>
+        <button id="soundToggleBtn" class="btn-vintage py-2 text-xs rounded cursor-pointer bg-opacity-80">
+          🔊 SOM: LIGADO
+        </button>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TELA DE SELEÇÃO DE PERSONAGENS             -->
+    <!-- ========================================== -->
+    <div id="charSelectScreen" class="hidden absolute inset-0 z-30 flex flex-col items-center justify-center bg-[#18110b]/95 p-5 text-center space-y-4">
+      <h2 class="text-3xl font-vintage text-amber-400 border-b-2 border-amber-500/40 pb-1">
+        ESCOLHA SEU LUTADOR
+      </h2>
+
+      <div id="charactersGrid" class="grid grid-cols-4 gap-3 max-w-xl w-full"></div>
+
+      <div class="bg-[#2a1d13] p-3 rounded-lg border border-[#8c6d46] text-xs text-amber-100 max-w-xl w-full flex items-center justify-between">
+        <div class="text-left">
+          <span id="charNameDisplay" class="font-bold text-amber-300 text-sm block">EDUARDO</span>
+          <span id="charDescDisplay" class="text-amber-200/80">Estudante do SENAI com uniforme clássico e disparos industriais!</span>
+        </div>
+        <button id="confirmCharBtn" class="btn-vintage px-4 py-2 text-xs rounded cursor-pointer shrink-0">
+          SELECIONAR
+        </button>
+      </div>
+
+      <button id="backFromCharBtn" class="btn-vintage px-6 py-2 text-xs rounded cursor-pointer">
+        VOLTAR AO MENU
+      </button>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TELA DE CONTROLES                          -->
+    <!-- ========================================== -->
+    <div id="controlsScreen" class="hidden absolute inset-0 z-30 flex flex-col items-center justify-center bg-[#18110b]/95 p-6 text-center space-y-4">
+      <h2 class="text-3xl md:text-4xl font-vintage text-amber-400 border-b-2 border-amber-500/40 pb-2">
+        CONTROLES & REGRAS
+      </h2>
+
+      <div class="bg-[#2a1d13] p-4 rounded-lg border border-[#8c6d46] text-left text-xs md:text-sm text-amber-100/90 grid grid-cols-1 md:grid-cols-2 gap-3 max-w-lg w-full">
+        <div><span class="font-bold text-amber-400">A / D</span>: Mover Esquerda / Direita</div>
+        <div><span class="font-bold text-amber-400">W / Espaço</span>: Pular</div>
+        <div><span class="font-bold text-amber-400">L (ou E)</span>: Atirar</div>
+        <div><span class="font-bold text-amber-400">J (ou K / Q)</span>: Dash (Aceleração)</div>
+        <div><span class="font-bold text-amber-400">C (Segurar)</span>: Parar & Mirar 8 Direções</div>
+        <div><span class="font-bold text-amber-400">X</span>: Especial EX (Super Disparo)</div>
+      </div>
+
+      <button id="backFromControlsBtn" class="btn-vintage px-6 py-2 text-sm rounded cursor-pointer">
+        VOLTAR AO MENU
+      </button>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TELA DE CRÉDITOS                           -->
+    <!-- ========================================== -->
+    <div id="creditsScreen" class="hidden absolute inset-0 z-30 flex flex-col items-center justify-center bg-[#18110b]/95 p-6 text-center space-y-4">
+      <h2 class="text-3xl font-vintage text-amber-400">CRÉDITOS</h2>
+      <div class="bg-[#2a1d13] p-5 rounded-lg border border-[#8c6d46] text-sm text-amber-100/90 max-w-md space-y-3">
+        <p><strong>Desenvolvimento & Design:</strong><br>SENAI: A Era da Extinção.</p>
+        <p><strong>Personagem Principal:</strong><br>Eduardo (Estudante SENAI)</p>
+      </div>
+      <button id="backFromCreditsBtn" class="btn-vintage px-6 py-2 text-sm rounded cursor-pointer">
+        VOLTAR AO MENU
+      </button>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- HUD                                        -->
+    <!-- ========================================== -->
+    <div id="hud" class="absolute top-4 left-4 z-10 flex items-center space-x-4 pointer-events-none">
+      <div class="flex items-center space-x-1 bg-[#1a120b]/80 p-2 rounded-lg border border-[#6b4a2b]">
+        <span class="text-xs font-vintage text-amber-300 mr-1">HP:</span>
+        <div id="heartsContainer" class="flex space-x-1"></div>
+      </div>
+
+      <div class="flex items-center space-x-1 bg-[#1a120b]/80 p-2 rounded-lg border border-[#6b4a2b]">
+        <span class="text-xs font-vintage text-amber-300 mr-1">EX:</span>
+        <div id="exCardsContainer" class="flex space-x-1"></div>
+      </div>
+    </div>
+
+    <div id="bossHud" class="absolute top-4 right-4 z-10 w-48 md:w-64 bg-[#1a120b]/80 p-2 rounded-lg border border-[#6b4a2b] pointer-events-none">
+      <div class="flex justify-between items-center text-xs font-vintage text-amber-300 mb-1">
+        <span id="bossName">BARON VON TEAPOT</span>
+        <span id="bossHpPercent">100%</span>
+      </div>
+      <div class="w-full h-3 bg-[#3d250f] rounded-full overflow-hidden border border-[#6b4a2b]">
+        <div id="bossHpBar" class="h-full bg-gradient-to-r from-red-600 to-amber-500 w-full"></div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TELAS DE PAUSA / GAMEOVER / VITÓRIA       -->
+    <!-- ========================================== -->
+    <div id="pauseMenu" class="hidden absolute inset-0 z-30 flex flex-col items-center justify-center bg-black/80 p-6 text-center space-y-4">
+      <h2 class="text-4xl font-vintage text-amber-300">JOGO PAUSADO</h2>
+      <div class="flex flex-col gap-3 w-48">
+        <button id="resumeBtn" class="btn-vintage py-2 text-sm rounded cursor-pointer">CONTINUAR</button>
+        <button id="pauseMenuBtn" class="btn-vintage py-2 text-sm rounded cursor-pointer">MENU PRINCIPAL</button>
+      </div>
+    </div>
+
+    <div id="gameOverScreen" class="hidden absolute inset-0 z-30 flex flex-col items-center justify-center bg-red-950/90 p-6 text-center space-y-4">
+      <h2 class="text-5xl font-title text-red-500 drop-shadow-[0_4px_0_#000]">YOU DIED!</h2>
+      <p class="text-amber-200 text-sm font-vintage">Eduardo foi derrotado nesta rodada!</p>
+      <button id="restartBtn" class="btn-vintage px-6 py-2 text-sm rounded cursor-pointer">TENTAR NOVAMENTE</button>
+    </div>
+
+    <div id="victoryScreen" class="hidden absolute inset-0 z-30 flex flex-col items-center justify-center bg-amber-950/90 p-6 text-center space-y-4">
+      <h2 class="text-5xl font-title text-yellow-400 drop-shadow-[0_4px_0_#000]">KNOCKOUT!</h2>
+      <p class="text-amber-100 text-sm font-vintage">Eduardo venceu o desafio com maestria!</p>
+      <div class="flex gap-3">
+        <button id="victoryRestartBtn" class="btn-vintage px-6 py-2 text-sm rounded cursor-pointer">REVANCHE</button>
+        <button id="victoryMenuBtn" class="btn-vintage px-6 py-2 text-sm rounded cursor-pointer">MENU PRINCIPAL</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // --- SINTETIZADOR DE ÁUDIO OTIMIZADO ---
+    class SoundManager {
+      constructor() {
+        this.ctx = null;
+        this.enabled = true;
+      }
+
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (AudioContext) this.ctx = new AudioContext();
+        }
+      }
+
+      playSound(type, freqStart, freqEnd, duration, vol) {
+        if (!this.enabled || !this.ctx) return;
+        try {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = type;
+          osc.frequency.setValueAtTime(freqStart, this.ctx.currentTime);
+          if (freqEnd) osc.frequency.exponentialRampToValueAtTime(freqEnd, this.ctx.currentTime + duration);
+          gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+          gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start();
+          osc.stop(this.ctx.currentTime + duration);
+        } catch(e) {}
+      }
+
+      playShoot() { this.playSound('square', 600, 100, 0.08, 0.1); }
+      playExShoot() { this.playSound('sawtooth', 200, 800, 0.25, 0.2); }
+      playJump() { this.playSound('sine', 150, 450, 0.1, 0.15); }
+      playHit() { this.playSound('triangle', 120, 40, 0.12, 0.2); }
+      playDash() { this.playSound('sine', 300, 100, 0.08, 0.2); }
+      playExplosion() { this.playSound('sawtooth', 150, 20, 0.5, 0.3); }
+    }
+
+    const sounds = new SoundManager();
+
+    // --- CANVAS DO JOGO ---
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d', { alpha: false });
+
+    // --- ESTADO DO JOGO ---
+    let gameState = 'MENU';
+    let gameFrame = 0;
+    let difficulty = 'NORMAL';
+    let bossDyingTimer = 0;
+    let screenShake = 0;
+
+    // --- REUTILIZAÇÃO DE ARRAYS PARA DESEMPENHO ---
+    let playerBullets = [];
+    let bossBullets = [];
+    let particles = [];
+    const MAX_PARTICLES = 40;
+
+    // --- JOGADOR ---
+    const player = {
+      x: 150,
+      y: 420,
+      groundY: 420,
+      width: 28,
+      height: 50,
+      vx: 0,
+      vy: 0,
+      speed: 5.5,
+      jumpForce: -13,
+      gravity: 0.65,
+      isGrounded: false,
+      facing: 1,
+      hp: 3,
+      maxHp: 3,
+      exGauge: 0,
+      maxExCards: 5,
+      isLocked: false,
+      isDashing: false,
+      dashTimer: 0,
+      dashCooldown: 0,
+      invulnerableTimer: 0,
+      aimAngle: 0,
+      lastShootTime: 0,
+      shootInterval: 200
+    };
+
+    // --- DESENHO RÁPIDO DO EDUARDO ---
+    function drawEduardo(ctx, x, y, facing, aimAngle, isLocked, isDashing) {
+      ctx.save();
+      ctx.translate(x, y - 25);
+      if (facing === -1) ctx.scale(-1, 1);
+
+      if (isDashing) {
+        ctx.fillStyle = '#bfa17a'; ctx.fillRect(-15, 12, 28, 10);
+        ctx.fillStyle = '#1c2b46'; ctx.fillRect(10, 18, 12, 6); ctx.fillRect(-20, 18, 12, 6);
+        ctx.fillStyle = '#ba262b'; ctx.fillRect(-12, -2, 24, 16);
+        ctx.fillStyle = '#ffffff'; ctx.fillRect(-12, 8, 24, 6);
+        ctx.fillStyle = '#fce2c4'; ctx.beginPath(); ctx.arc(4, -14, 14, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#3a2416'; ctx.beginPath(); ctx.arc(4, -18, 15, Math.PI, Math.PI * 2); ctx.fill();
+        ctx.restore();
+        return;
+      }
+
+      const bounceY = (gameFrame & 7) < 4 ? 2 : 0;
+
+      // Sombra Simples
+      ctx.fillStyle = 'rgba(0,0,0,0.15)';
+      ctx.fillRect(-12, 22, 24, 4);
+
+      // Pernas & Sapatos
+      ctx.fillStyle = '#cbb291'; ctx.fillRect(-10, 8, 8, 12); ctx.fillRect(2, 8, 8, 12);
+      ctx.fillStyle = '#203354'; ctx.fillRect(-13, 18, 11, 6); ctx.fillRect(2, 18, 11, 6);
+
+      // Camisa SENAI
+      ctx.fillStyle = '#c82333'; ctx.fillRect(-11, -12 - bounceY, 22, 20);
+      ctx.fillStyle = '#ffffff'; ctx.fillRect(-11, -2 - bounceY, 22, 8);
+
+      // Cabeça & Rosto
+      ctx.fillStyle = '#fce2c4'; ctx.beginPath(); ctx.arc(0, -22 - bounceY, 14, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#1a1008'; ctx.fillRect(2, -25 - bounceY, 3, 6); ctx.fillRect(-6, -25 - bounceY, 3, 6);
+
+      // Cabelo
+      ctx.fillStyle = '#3e2718'; ctx.beginPath(); ctx.arc(0, -26 - bounceY, 15, Math.PI * 0.8, Math.PI * 2.2); ctx.fill();
+
+      // Braço e Mira
+      ctx.save();
+      ctx.translate(0, -10 - bounceY);
+      const displayAngle = facing === -1 ? Math.PI - aimAngle : aimAngle;
+      ctx.rotate(displayAngle);
+      ctx.fillStyle = '#c82333'; ctx.fillRect(0, -4, 14, 8);
+      ctx.fillStyle = '#fce2c4'; ctx.fillRect(14, -2, 10, 4);
+      ctx.restore();
+
+      ctx.restore();
+    }
+
+    // --- PERSONAGENS ---
+    const characters = [
+      { id: 'eduardo', name: 'EDUARDO', desc: 'Estudante do SENAI com uniforme clássico e disparos industriais!', unlocked: true, draw: drawEduardo },
+      { id: 'char2', name: 'PERSONAGEM 2', desc: 'Aguardando envio dos sprites...', unlocked: false },
+      { id: 'char3', name: 'PERSONAGEM 3', desc: 'Aguardando envio dos sprites...', unlocked: false },
+      { id: 'char4', name: 'PERSONAGEM 4', desc: 'Aguardando envio dos sprites...', unlocked: false },
+      { id: 'char5', name: 'PERSONAGEM 5', desc: 'Aguardando envio dos sprites...', unlocked: false },
+      { id: 'char6', name: 'PERSONAGEM 6', desc: 'Aguardando envio dos sprites...', unlocked: false },
+      { id: 'char7', name: 'PERSONAGEM 7', desc: 'Aguardando envio dos sprites...', unlocked: false },
+      { id: 'char8', name: 'PERSONAGEM 8', desc: 'Aguardando envio dos sprites...', unlocked: false }
+    ];
+
+    let selectedCharIndex = 0;
+    let previewCharIndex = 0;
+
+    // --- CHEFE ---
+    const boss = {
+      x: 750,
+      y: 340,
+      width: 120,
+      height: 120,
+      hp: 300,
+      maxHp: 300,
+      phase: 1,
+      attackTimer: 0,
+      hitFlashTimer: 0,
+      floatOffset: 0
+    };
+
+    const difficultySettings = {
+      EASY: { attackCooldown: { phase1: 200, phase2: 150 }, bulletSpeed: 2.8, damage: 0.5 },
+      NORMAL: { attackCooldown: { phase1: 150, phase2: 110 }, bulletSpeed: 3.8, damage: 1 },
+      HARD: { attackCooldown: { phase1: 110, phase2: 80 }, bulletSpeed: 4.8, damage: 1 },
+      TEST: { attackCooldown: { phase1: 999999, phase2: 999999 }, bulletSpeed: 0, damage: 0 }
+    };
+
+    // --- INPUTS ---
+    const keys = { a: false, d: false, w: false, s: false, e: false, q: false, c: false, x: false, space: false, l: false, k: false, j: false };
+
+    window.addEventListener('keydown', (e) => {
+      const code = e.code;
+      if (code === 'KeyA' || code === 'ArrowLeft') keys.a = true;
+      if (code === 'KeyD' || code === 'ArrowRight') keys.d = true;
+      if (code === 'KeyW' || code === 'ArrowUp') keys.w = true;
+      if (code === 'KeyS' || code === 'ArrowDown') keys.s = true;
+      if (code === 'KeyE' || code === 'KeyL') keys.e = true;
+      if (code === 'KeyQ' || code === 'KeyK' || code === 'KeyJ') keys.q = true;
+      if (code === 'KeyC') keys.c = true;
+      if (code === 'KeyX') keys.x = true;
+      if (code === 'Space') keys.space = true;
+      if (code === 'KeyP' || code === 'Escape') togglePause();
+    });
+
+    window.addEventListener('keyup', (e) => {
+      const code = e.code;
+      if (code === 'KeyA' || code === 'ArrowLeft') keys.a = false;
+      if (code === 'KeyD' || code === 'ArrowRight') keys.d = false;
+      if (code === 'KeyW' || code === 'ArrowUp') keys.w = false;
+      if (code === 'KeyS' || code === 'ArrowDown') keys.s = false;
+      if (code === 'KeyE' || code === 'KeyL') keys.e = false;
+      if (code === 'KeyQ' || code === 'KeyK' || code === 'KeyJ') keys.q = false;
+      if (code === 'KeyC') keys.c = false;
+      if (code === 'KeyX') keys.x = false;
+      if (code === 'Space') keys.space = false;
+    });
+
+    function resetGame() {
+      player.x = 150;
+      player.y = player.groundY;
+      player.hp = player.maxHp;
+      player.exGauge = 0;
+      player.invulnerableTimer = 0;
+      player.isDashing = false;
+
+      boss.hp = boss.maxHp;
+      boss.phase = 1;
+      boss.attackTimer = 0;
+      boss.hitFlashTimer = 0;
+
+      playerBullets.length = 0;
+      bossBullets.length = 0;
+      particles.length = 0;
+      updateHudUI();
+    }
+
+    function startGame() {
+      resetGame();
+      gameState = 'PLAYING';
+      showScreen(null);
+    }
+
+    function togglePause() {
+      if (gameState === 'PLAYING') {
+        gameState = 'PAUSED';
+        showScreen('pauseMenu');
+      } else if (gameState === 'PAUSED') {
+        gameState = 'PLAYING';
+        showScreen(null);
+      }
+    }
+
+    function updatePlayer() {
+      if (player.dashCooldown > 0) player.dashCooldown--;
+      if (player.invulnerableTimer > 0) player.invulnerableTimer--;
+
+      if ((keys.q || keys.k || keys.j) && player.dashCooldown === 0 && !player.isDashing) {
+        player.isDashing = true;
+        player.dashTimer = 12;
+        player.dashCooldown = 45;
+        player.invulnerableTimer = 15;
+        sounds.playDash();
+      }
+
+      if (player.isDashing) {
+        player.vx = player.facing * 12;
+        player.vy = 0;
+        player.dashTimer--;
+        if (player.dashTimer <= 0) player.isDashing = false;
+      } else {
+        player.isLocked = keys.c;
+
+        if (!player.isLocked) {
+          if (keys.a) { player.vx = -player.speed; player.facing = -1; }
+          else if (keys.d) { player.vx = player.speed; player.facing = 1; }
+          else { player.vx = 0; }
+
+          if ((keys.w || keys.space) && player.isGrounded) {
+            player.vy = player.jumpForce;
+            player.isGrounded = false;
+            sounds.playJump();
+          }
+        } else {
+          player.vx = 0;
+        }
+
+        player.vy += player.gravity;
+      }
+
+      player.x += player.vx;
+      player.y += player.vy;
+
+      if (player.y >= player.groundY) {
+        player.y = player.groundY;
+        player.vy = 0;
+        player.isGrounded = true;
+      }
+
+      if (player.x < 30) player.x = 30;
+      if (player.x > canvas.width - 30) player.x = canvas.width - 30;
+
+      let dirX = 0, dirY = 0;
+      if (keys.w) dirY -= 1;
+      if (keys.s) dirY += 1;
+      if (keys.a) dirX -= 1;
+      if (keys.d) dirX += 1;
+
+      if (dirX === 0 && dirY === 0) dirX = player.facing;
+      else if (dirX !== 0) player.facing = Math.sign(dirX);
+
+      player.aimAngle = Math.atan2(dirY, dirX);
+
+      const now = Date.now();
+      if ((keys.e || keys.l) && now - player.lastShootTime >= player.shootInterval) {
+        shootPlayerBullet();
+        player.lastShootTime = now;
+      }
+
+      if (keys.x && player.exGauge >= 100) {
+        shootExSpecial();
+        player.exGauge -= 100;
+        updateHudUI();
+      }
+    }
+
+    function shootPlayerBullet() {
+      const speed = 14;
+      playerBullets.push({
+        x: player.x + (player.facing * 20),
+        y: player.y - 30,
+        vx: Math.cos(player.aimAngle) * speed,
+        vy: Math.sin(player.aimAngle) * speed,
+        radius: 6,
+        isEx: false
+      });
+      sounds.playShoot();
+    }
+
+    function shootExSpecial() {
+      const speed = 16;
+      playerBullets.push({
+        x: player.x + (player.facing * 20),
+        y: player.y - 30,
+        vx: Math.cos(player.aimAngle) * speed,
+        vy: Math.sin(player.aimAngle) * speed,
+        radius: 18,
+        isEx: true,
+        damage: 25
+      });
+      sounds.playExShoot();
+    }
+
+    function updateBoss() {
+      if (boss.hitFlashTimer > 0) boss.hitFlashTimer--;
+
+      boss.floatOffset += 0.04;
+      const hoverY = Math.sin(boss.floatOffset) * 10;
+
+      if (difficulty === 'TEST') {
+        if (boss.hp < 50) { boss.hp = boss.maxHp; updateHudUI(); }
+        return;
+      }
+
+      if (boss.hp < 150 && boss.phase === 1) boss.phase = 2;
+
+      boss.attackTimer++;
+      const settings = difficultySettings[difficulty];
+      const cooldown = boss.phase === 1 ? settings.attackCooldown.phase1 : settings.attackCooldown.phase2;
+
+      if (boss.attackTimer % cooldown === 0) {
+        const angles = boss.phase === 1 ? [-0.2, 0, 0.2] : [-0.4, -0.2, 0, 0.2, 0.4];
+        const baseAngle = Math.atan2((player.y - 30) - boss.y, player.x - boss.x);
+        const speed = settings.bulletSpeed;
+
+        for (let i = 0; i < angles.length; i++) {
+          const angle = angles[i];
+          bossBullets.push({
+            x: boss.x - 40,
+            y: boss.y + hoverY,
+            vx: Math.cos(baseAngle + angle) * speed,
+            vy: Math.sin(baseAngle + angle) * speed,
+            radius: 10,
+            type: 'STEAM'
+          });
+        }
+      }
+
+      if (boss.phase === 2 && boss.attackTimer % (cooldown * 2) === 0) {
+        bossBullets.push({
+          x: boss.x,
+          y: boss.y,
+          vx: -(settings.bulletSpeed * 0.8),
+          vy: -6,
+          radius: 14,
+          type: 'CUP',
+          bounces: 3
+        });
+      }
+    }
+
+    function updateBossDeath() {
+      bossDyingTimer++;
+      screenShake = (Math.random() * 6 - 3);
+
+      if (bossDyingTimer % 6 === 0) {
+        sounds.playExplosion();
+        if (particles.length < MAX_PARTICLES) {
+          for (let i = 0; i < 4; i++) {
+            particles.push({
+              x: boss.x + (Math.random() - 0.5) * 80,
+              y: boss.y + (Math.random() - 0.5) * 80,
+              vx: (Math.random() - 0.5) * 8,
+              vy: (Math.random() - 0.5) * 8,
+              life: 20,
+              color: Math.random() > 0.5 ? '#fce38a' : '#e84a5f',
+              size: Math.random() * 6 + 3
+            });
+          }
+        }
+      }
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx; p.y += p.vy; p.life--;
+        if (p.life <= 0) particles.splice(i, 1);
+      }
+
+      if (bossDyingTimer > 80) {
+        screenShake = 0;
+        gameState = 'VICTORY';
+        showScreen('victoryScreen');
+      }
+    }
+
+    function updateProjectiles() {
+      const bossRadiusSq = (boss.width * 0.5) * (boss.width * 0.5);
+
+      for (let i = playerBullets.length - 1; i >= 0; i--) {
+        const b = playerBullets[i];
+        b.x += b.vx; b.y += b.vy;
+
+        const dx = b.x - boss.x;
+        const dy = b.y - boss.y;
+        if (dx * dx + dy * dy < bossRadiusSq) {
+          const dmg = b.isEx ? b.damage : 5;
+          boss.hp = Math.max(0, boss.hp - dmg);
+          boss.hitFlashTimer = 6;
+
+          if (!b.isEx && player.exGauge < player.maxExCards * 100) {
+            player.exGauge += 10;
+          }
+
+          updateHudUI();
+          sounds.playHit();
+
+          if (particles.length < MAX_PARTICLES) {
+            for (let p = 0; p < 3; p++) {
+              particles.push({
+                x: b.x, y: b.y,
+                vx: (Math.random() - 0.5) * 5,
+                vy: (Math.random() - 0.5) * 5,
+                life: 12,
+                color: '#fce38a',
+                size: 3
+              });
+            }
+          }
+
+          playerBullets.splice(i, 1);
+          continue;
+        }
+
+        if (b.x < 0 || b.x > canvas.width || b.y < 0 || b.y > canvas.height) {
+          playerBullets.splice(i, 1);
+        }
+      }
+
+      const pX = player.x;
+      const pY = player.y - 30;
+
+      for (let i = bossBullets.length - 1; i >= 0; i--) {
+        const b = bossBullets[i];
+        b.x += b.vx; b.y += b.vy;
+
+        if (b.type === 'CUP') {
+          b.vy += 0.3;
+          if (b.y >= player.groundY + 20) {
+            b.y = player.groundY + 20;
+            b.vy = -6;
+            b.bounces--;
+          }
+          if (b.bounces <= 0) {
+            bossBullets.splice(i, 1);
+            continue;
+          }
+        }
+
+        if (player.invulnerableTimer <= 0) {
+          const dx = b.x - pX;
+          const dy = b.y - pY;
+          const hitRadius = (player.width * 0.5) + b.radius;
+          if (dx * dx + dy * dy < hitRadius * hitRadius) {
+            const settings = difficultySettings[difficulty];
+            player.hp = Math.max(0, player.hp - settings.damage);
+            player.invulnerableTimer = 60;
+            updateHudUI();
+            sounds.playHit();
+
+            if (player.hp <= 0) {
+              gameState = 'GAMEOVER';
+              showScreen('gameOverScreen');
+            }
+
+            bossBullets.splice(i, 1);
+            continue;
+          }
+        }
+
+        if (b.x < -20 || b.x > canvas.width + 20 || b.y > canvas.height + 20) {
+          bossBullets.splice(i, 1);
+        }
+      }
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx; p.y += p.vy; p.life--;
+        if (p.life <= 0) particles.splice(i, 1);
+      }
+
+      if (boss.hp <= 0 && gameState === 'PLAYING') {
+        gameState = 'BOSS_DYING';
+        bossDyingTimer = 0;
+        bossBullets.length = 0;
+      }
+    }
+
+    function render() {
+      ctx.save();
+      
+      if (screenShake !== 0) {
+        ctx.translate((Math.random() - 0.5) * screenShake, (Math.random() - 0.5) * screenShake);
+      }
+
+      // Fundo
+      ctx.fillStyle = '#ebd5b3';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Chão
+      ctx.strokeStyle = '#3d250f';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(0, player.groundY + 35);
+      ctx.lineTo(canvas.width, player.groundY + 35);
+      ctx.stroke();
+
+      // Jogador
+      if (player.invulnerableTimer % 6 < 3) {
+        const currentChar = characters[selectedCharIndex];
+        if (currentChar && currentChar.draw) {
+          currentChar.draw(ctx, player.x, player.y, player.facing, player.aimAngle, player.isLocked, player.isDashing);
+        }
+      }
+
+      // Boss
+      ctx.save();
+      const hoverY = Math.sin(boss.floatOffset) * 10;
+      ctx.translate(boss.x, boss.y + hoverY);
+
+      if (boss.hitFlashTimer > 0) ctx.fillStyle = '#ff4d4d';
+      else if (gameState === 'BOSS_DYING' && (bossDyingTimer & 2) === 0) ctx.fillStyle = '#ffffff';
+      else ctx.fillStyle = boss.phase === 1 ? '#2b2118' : '#4a1515';
+
+      ctx.strokeStyle = '#f7e7ce';
+      ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.arc(0, 0, 60, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+
+      ctx.fillStyle = '#f7e7ce';
+      ctx.beginPath();
+      ctx.arc(-20, -15, 12, 0, Math.PI * 2);
+      ctx.arc(15, -15, 12, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#1a1008';
+      ctx.beginPath();
+      ctx.arc(-22, -13, 5, 0, Math.PI * 2);
+      ctx.arc(13, -13, 5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+
+      // Projéteis Jogador
+      ctx.fillStyle = '#1a1008';
+      for (let i = 0; i < playerBullets.length; i++) {
+        const b = playerBullets[i];
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Projéteis Boss
+      for (let i = 0; i < bossBullets.length; i++) {
+        const b = bossBullets[i];
+        ctx.fillStyle = b.type === 'STEAM' ? '#d4a86a' : '#8c2b2b';
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Partículas
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        ctx.fillStyle = p.color;
+        ctx.fillRect(p.x, p.y, p.size || 3, p.size || 3);
+      }
+
+      ctx.restore();
+    }
+
+    function updateHudUI() {
+      const heartsContainer = document.getElementById('heartsContainer');
+      heartsContainer.innerHTML = '';
+      const fullHearts = Math.floor(player.hp);
+      const hasHalfHeart = player.hp % 1 !== 0;
+
+      for (let i = 0; i < player.maxHp; i++) {
+        const heart = document.createElement('span');
+        heart.className = 'text-base';
+        if (i < fullHearts) heart.innerText = '❤️';
+        else if (i === fullHearts && hasHalfHeart) heart.innerText = '💔';
+        else heart.innerText = '🖤';
+        heartsContainer.appendChild(heart);
+      }
+
+      const exCardsContainer = document.getElementById('exCardsContainer');
+      exCardsContainer.innerHTML = '';
+      for (let i = 0; i < player.maxExCards; i++) {
+        const card = document.createElement('div');
+        const isFull = player.exGauge >= (i + 1) * 100;
+        card.className = `ex-card ${isFull ? 'full' : ''}`;
+        exCardsContainer.appendChild(card);
+      }
+
+      document.getElementById('bossName').innerText = difficulty === 'TEST' ? 'BONECO DE TREINO' : 'BARON VON TEAPOT';
+      const hpPercent = Math.max(0, Math.floor((boss.hp / boss.maxHp) * 100));
+      document.getElementById('bossHpPercent').innerText = `${hpPercent}%`;
+      document.getElementById('bossHpBar').style.width = `${hpPercent}%`;
+    }
+
+    function gameLoop() {
+      if (gameState === 'PLAYING') {
+        gameFrame++;
+        updatePlayer();
+        updateBoss();
+        updateProjectiles();
+      } else if (gameState === 'BOSS_DYING') {
+        updateBossDeath();
+      }
+      
+      render();
+      requestAnimationFrame(gameLoop);
+    }
+
+    function showScreen(screenId) {
+      const screens = ['mainMenu', 'charSelectScreen', 'controlsScreen', 'creditsScreen', 'gameOverScreen', 'victoryScreen', 'pauseMenu'];
+      screens.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.add('hidden');
+      });
+
+      if (screenId) {
+        const target = document.getElementById(screenId);
+        if (target) target.classList.remove('hidden');
+      }
+    }
+
+    function renderCharSelectionGrid() {
+      const grid = document.getElementById('charactersGrid');
+      grid.innerHTML = '';
+
+      characters.forEach((char, index) => {
+        const card = document.createElement('div');
+        const isSelected = index === previewCharIndex;
+        const isEquipped = index === selectedCharIndex;
+
+        card.className = `relative p-3 rounded-lg border-2 cursor-pointer flex flex-col items-center justify-center bg-[#2a1d13] transition-all ${
+          isSelected ? 'border-amber-400 bg-[#3d2a1b] scale-105' : 'border-[#8c6d46]/50 opacity-80'
+        }`;
+
+        const badge = isEquipped ? `<span class="absolute top-1 right-1 bg-amber-500 text-[8px] font-bold text-black px-1 rounded">EM USO</span>` : '';
+
+        if (char.unlocked && index === 0) {
+          card.innerHTML = `
+            ${badge}
+            <div class="w-12 h-12 bg-[#ebd5b3] rounded-full border-2 border-[#3d250f] flex items-center justify-center mb-1 overflow-hidden relative">
+              <div class="w-7 h-7 bg-[#c82333] rounded-full flex flex-col items-center justify-center border border-amber-300">
+                <div class="w-4 h-4 rounded-full bg-[#fce2c4] border border-[#3a2416]"></div>
+              </div>
+            </div>
+            <span class="text-[10px] font-vintage text-amber-200 truncate w-full text-center">${char.name}</span>
+          `;
+        } else {
+          card.innerHTML = `
+            ${badge}
+            <div class="w-12 h-12 bg-black/40 rounded-full border border-dashed border-amber-800 flex items-center justify-center mb-1 text-amber-700 font-bold text-lg">?</div>
+            <span class="text-[10px] font-vintage text-amber-600/80 truncate w-full text-center">${char.name}</span>
+          `;
+        }
+
+        card.addEventListener('click', () => {
+          previewCharIndex = index;
+          updateCharDetails();
+          renderCharSelectionGrid();
+        });
+
+        grid.appendChild(card);
+      });
+    }
+
+    function updateCharDetails() {
+      const char = characters[previewCharIndex];
+      document.getElementById('charNameDisplay').innerText = char.name;
+      document.getElementById('charDescDisplay').innerText = char.desc;
+
+      const confirmBtn = document.getElementById('confirmCharBtn');
+      if (previewCharIndex === selectedCharIndex) {
+        confirmBtn.innerText = 'SELECIONADO';
+        confirmBtn.classList.add('opacity-50', 'pointer-events-none');
+      } else if (!char.unlocked) {
+        confirmBtn.innerText = 'EM BREVE';
+        confirmBtn.classList.add('opacity-50', 'pointer-events-none');
+      } else {
+        confirmBtn.innerText = 'SELECIONAR';
+        confirmBtn.classList.remove('opacity-50', 'pointer-events-none');
+      }
+    }
+
+    function goToMainMenu() {
+      gameState = 'MENU';
+      document.getElementById('selectedCharLabel').innerText = characters[selectedCharIndex].name;
+      showScreen('mainMenu');
+    }
+
+    document.getElementById('startBtn').addEventListener('click', () => { sounds.init(); startGame(); });
+    document.getElementById('charSelectBtn').addEventListener('click', () => { previewCharIndex = selectedCharIndex; renderCharSelectionGrid(); updateCharDetails(); showScreen('charSelectScreen'); });
+    document.getElementById('confirmCharBtn').addEventListener('click', () => {
+      if (characters[previewCharIndex].unlocked) {
+        selectedCharIndex = previewCharIndex;
+        updateCharDetails();
+        renderCharSelectionGrid();
+        document.getElementById('selectedCharLabel').innerText = characters[selectedCharIndex].name;
+      }
+    });
+
+    document.getElementById('backFromCharBtn').addEventListener('click', goToMainMenu);
+    document.getElementById('controlsBtn').addEventListener('click', () => showScreen('controlsScreen'));
+    document.getElementById('backFromControlsBtn').addEventListener('click', goToMainMenu);
+    document.getElementById('creditsBtn').addEventListener('click', () => showScreen('creditsScreen'));
+    document.getElementById('backFromCreditsBtn').addEventListener('click', goToMainMenu);
+    document.getElementById('restartBtn').addEventListener('click', startGame);
+    document.getElementById('victoryRestartBtn').addEventListener('click', startGame);
+    document.getElementById('victoryMenuBtn').addEventListener('click', goToMainMenu);
+    document.getElementById('resumeBtn').addEventListener('click', togglePause);
+    document.getElementById('pauseMenuBtn').addEventListener('click', goToMainMenu);
+
+    function setDifficulty(diff) {
+      difficulty = diff;
+      const buttons = {
+        EASY: document.getElementById('diffEasy'),
+        NORMAL: document.getElementById('diffNormal'),
+        HARD: document.getElementById('diffHard'),
+        TEST: document.getElementById('diffTest')
+      };
+
+      Object.keys(buttons).forEach(key => {
+        if (key === diff) {
+          buttons[key].classList.remove('opacity-60');
+          buttons[key].classList.add('ring-2', 'ring-amber-300');
+        } else {
+          buttons[key].classList.add('opacity-60');
+          buttons[key].classList.remove('ring-2', 'ring-amber-300');
+        }
+      });
+    }
+
+    document.getElementById('diffEasy').addEventListener('click', () => setDifficulty('EASY'));
+    document.getElementById('diffNormal').addEventListener('click', () => setDifficulty('NORMAL'));
+    document.getElementById('diffHard').addEventListener('click', () => setDifficulty('HARD'));
+    document.getElementById('diffTest').addEventListener('click', () => setDifficulty('TEST'));
+
+    document.getElementById('soundToggleBtn').addEventListener('click', () => {
+      sounds.enabled = !sounds.enabled;
+      document.getElementById('soundToggleBtn').innerText = sounds.enabled ? '🔊 SOM: LIGADO' : '🔇 SOM: DESLIGADO';
+    });
+
+    window.onload = () => {
+      goToMainMenu();
+      requestAnimationFrame(gameLoop);
+    };
+  </script>
+</body>
+</html>
