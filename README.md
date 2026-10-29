@@ -1,2 +1,3 @@
-# Jogo estilo cuphead com tema SENAI
-# Feito com Gemini 3
+# SENAI - A ERA DA EXTINÇÃO
+
+[Clique aqui para acessar o jogo](https://leandroimenes.github.io/SENAI-A-Era-da-Extincao/)
