@@ -1126,6 +1126,7 @@ acc+=Math.min(100,now-last);last=now;
 let n=0;
 while(acc>=STEP&&n++<5){
 acc-=STEP;
+if(screenShake>0){screenShake*=.82;if(screenShake<.4)screenShake=0}
 if(gameState==='PLAYING'){gameFrame++;stats.frames++;updatePlayer();updateBoss();updateProjectiles()}
 else if(gameState==='BOSS_DYING')updateBossDeath();
 }
